@@ -18,7 +18,6 @@ function createElement(type, config, children) {
     } else {
         props.children = wrapToVdom(children); 
     }
-    console.log(props)
     return {
         $$typeof: REACT_ELEMENT,
         type,

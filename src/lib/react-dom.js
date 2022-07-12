@@ -7,7 +7,6 @@ import { REACT_TEXT } from "./constants";
  */
 function render(vdom, container) {
     let newDOM = createDOM(vdom);
-    console.log(newDOM)
     container.appendChild(newDOM);
 }
 /**
@@ -19,12 +18,15 @@ function createDOM(vdom) {
     let dom;
     if (type === REACT_TEXT) {
         dom = document.createTextNode(props)
-    } else {
+    } else if (typeof type === "function") {
+        return mountFunctionComponent(vdom);
+    }
+    else {
         dom = document.createElement(type)
     }
     if (props) {
         updateProps(dom, {}, props)
-        if (props.children && typeof props.children === "object" && props.children.type===REACT_TEXT) {
+        if (props.children && typeof props.children === "object" && props.children.type === REACT_TEXT) {
             render(props.children, dom)
         } else if (Array.isArray(props.children)) {
             reconcileChildren(props.children, dom)
@@ -32,7 +34,15 @@ function createDOM(vdom) {
     }
     return dom
 }
-
+/**
+ * 挂载函数式组件
+ * @param {*} vdom 
+ */
+function mountFunctionComponent(vdom) {
+    const { type: fn, props } = vdom;
+    const renderVdom = fn(props);
+    return createDOM(renderVdom)
+}
 function reconcileChildren(childrenVdom, parentDOM) {
     for (let i = 0; i < childrenVdom.length; i++) {
         render(childrenVdom[i], parentDOM);
