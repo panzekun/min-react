@@ -19,9 +19,12 @@ function createDOM(vdom) {
     if (type === REACT_TEXT) {
         dom = document.createTextNode(props)
     } else if (typeof type === "function") {
-        return mountFunctionComponent(vdom);
-    }
-    else {
+        if (type.isReactComponent) {
+            return mountClassComponent(vdom);
+        } else {
+            return mountFunctionComponent(vdom);
+        }
+    } else {
         dom = document.createElement(type)
     }
     if (props) {
@@ -33,6 +36,16 @@ function createDOM(vdom) {
         }
     }
     return dom
+}
+/**
+ * 挂载class组件
+ * @param {*} vdom 
+ */
+function mountClassComponent(vdom) {
+    const { type: ClassCom, props } = vdom;
+    const classInstance = new ClassCom(props);
+    let renderVdom = classInstance.render();
+    return createDOM(renderVdom)
 }
 /**
  * 挂载函数式组件
