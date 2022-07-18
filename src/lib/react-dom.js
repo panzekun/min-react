@@ -35,6 +35,7 @@ function createDOM(vdom) {
             reconcileChildren(props.children, dom)
         }
     }
+    vdom.dom = dom;
     return dom
 }
 /**
@@ -45,7 +46,10 @@ function mountClassComponent(vdom) {
     const { type: ClassCom, props } = vdom;
     const classInstance = new ClassCom(props);
     let renderVdom = classInstance.render();
-    return createDOM(renderVdom)
+    //把类组件渲染的虚拟dom保存在类的实例上
+    classInstance.oldRenderVdom = renderVdom;
+    const dom = createDOM(renderVdom);
+    return dom
 }
 /**
  * 挂载函数式组件
@@ -54,12 +58,39 @@ function mountClassComponent(vdom) {
 function mountFunctionComponent(vdom) {
     const { type: fn, props } = vdom;
     const renderVdom = fn(props);
-    return createDOM(renderVdom)
+    vdom.oldRenderVdom = renderVdom;
+    const dom = createDOM(renderVdom);
+    return dom
 }
 function reconcileChildren(childrenVdom, parentDOM) {
     for (let i = 0; i < childrenVdom.length; i++) {
         render(childrenVdom[i], parentDOM);
     }
+}
+/**
+ * 根据虚拟dom查找对应的真实dom
+ * @param {*} vdom 
+ * @returns 
+ */
+export function findDOM(vdom) {
+    if (!vdom) return null;
+    if (vdom.dom) {
+        return vdom.dom;
+    } else {
+        const renderVdom = vdom.oldRenderVdom;
+        return findDOM(renderVdom);
+    }
+}
+/**
+ * 对比
+ * @param {*} parentDOM 
+ * @param {*} oldVdom 
+ * @param {*} newVdom 
+ */
+export function compareTwoVdom(parentDOM, oldVdom, newVdom) {
+    const oldDOM = findDOM(oldVdom);
+    const newDOM = createDOM(newVdom);
+    parentDOM.replaceChild(newDOM, oldDOM);
 }
 /**
  * 将新的属性同步到真实DOM上
@@ -76,6 +107,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
             for (const attr in styleObj) {
                 dom.style[attr] = styleObj[attr]
             }
+        } else if (/^on[A-Z].*/.test(key)) { //处理事件
+            dom[key.toLowerCase()] = newProps[key];
         } else {// id  className ...其他属性
             dom[key] = newProps[key]
         }
