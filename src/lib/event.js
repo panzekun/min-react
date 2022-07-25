@@ -29,6 +29,11 @@ function dispatchEvent(event) {
     }
     updateQueue.batchUpdate();
 }
+/**
+ * 定义代理事件对象
+ * @param {*} nativeEvent 
+ * @returns 
+ */
 function createSyntheticEvent(nativeEvent) {
     let syntheticEvent = {};
     for (let key in nativeEvent) {//把原生事件上的属性拷贝到合成事件对象上去
