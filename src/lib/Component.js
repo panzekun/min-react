@@ -1,10 +1,21 @@
 import { findDOM, compareTwoVdom } from "./react-dom";
-
+export const updateQueue = {
+    isBatchingUpdate: false,//是否批量更新
+    updaters: new Set(),
+    batchUpdate() {
+        updateQueue.isBatchingUpdate = false;
+        for (var updater of updateQueue.updaters) {
+            updater.updateComponent();
+        }
+        updateQueue.updaters.clear();
+    }
+}
 class Updater {
     constructor(componentInstance) {
         this.classInstance = componentInstance;
         this.pendingStates = []; //缓存修改的所有状态
         this.callbacks = []; //状态更新后的回调
+        this.nextProps = undefined;
     }
     addState(partialState, callback) {
         this.pendingStates.push(partialState);///等待更新的状态
@@ -13,8 +24,13 @@ class Updater {
         }
         this.emitUpdate()
     }
-    emitUpdate() {
-        this.updateComponent()
+    emitUpdate(nextProps) {
+        this.nextProps = nextProps;
+        if (updateQueue.isBatchingUpdate) {
+            updateQueue.updaters.add(this);
+        } else {
+            this.updateComponent()
+        }
     }
     /**
      * 更新视图
@@ -24,8 +40,8 @@ class Updater {
      */
     updateComponent() {
         const { classInstance, pendingStates } = this;
-        if (pendingStates.length > 0) {
-            shouldUpdate(classInstance, this.getState());
+        if (this.nextProps || pendingStates.length > 0) {
+            shouldUpdate(classInstance, this.nextProps, this.getState());
         }
     }
     getState() {
@@ -41,7 +57,8 @@ class Updater {
         return state;
     }
 }
-function shouldUpdate(classInstance, nextState) {
+function shouldUpdate(classInstance, nextProps, nextState) {
+    if (nextProps) classInstance.props = nextProps;
     classInstance.state = nextState;
     classInstance.forceUpdate();
 }

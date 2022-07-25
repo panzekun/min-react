@@ -1,5 +1,5 @@
 import { REACT_TEXT } from "./constants";
-
+import { addEvent } from './event';
 /**
  * 把虚拟DOM转成真实的DOM并插入到容器中
  * @param {*} vdom 
@@ -107,8 +107,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
             for (const attr in styleObj) {
                 dom.style[attr] = styleObj[attr]
             }
-        } else if (/^on[A-Z].*/.test(key)) { //处理事件
-            dom[key.toLowerCase()] = newProps[key];
+        } else if (key.startsWith('on')) { //处理事件
+            addEvent(dom, key.toLocaleLowerCase(), newProps[key]);
         } else {// id  className ...其他属性
             dom[key] = newProps[key]
         }
