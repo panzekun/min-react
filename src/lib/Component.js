@@ -15,7 +15,7 @@ class Updater {
         this.classInstance = componentInstance;
         this.pendingStates = []; //缓存修改的所有状态
         this.callbacks = []; //状态更新后的回调
-        this.nextProps = undefined;
+        this.nextProps = null;
     }
     addState(partialState, callback) {
         this.pendingStates.push(partialState);///等待更新的状态

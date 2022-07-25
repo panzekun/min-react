@@ -1,4 +1,4 @@
-import { REACT_TEXT } from "./constants";
+import { REACT_FORWARD_REF_TYPE, REACT_TEXT } from "./constants";
 import { addEvent } from './event';
 /**
  * 把虚拟DOM转成真实的DOM并插入到容器中
@@ -14,9 +14,11 @@ function render(vdom, container) {
  * @param {*} vdom 
  */
 function createDOM(vdom) {
-    let { type, props } = vdom;
+    let { type, props, ref } = vdom;
     let dom;
-    if (type === REACT_TEXT) {
+    if (type && type.$$typeof === REACT_FORWARD_REF_TYPE) {
+        return mountForwardComponent(vdom);
+    } else if (type === REACT_TEXT) {
         dom = document.createTextNode(props)
     } else if (typeof type === "function") {
         if (type.isReactComponent) {
@@ -36,6 +38,18 @@ function createDOM(vdom) {
         }
     }
     vdom.dom = dom;
+    if (ref) ref.current = dom;
+    return dom
+}
+/**
+ * 挂载forwardRef转发组件
+ * @param {*} vdom 
+ */
+function mountForwardComponent(vdom) {
+    const { type, props, ref } = vdom;
+    const renderVdom = type.render(props, ref);
+    vdom.oldRenderVdom = renderVdom;
+    const dom = createDOM(renderVdom);
     return dom
 }
 /**
@@ -43,8 +57,9 @@ function createDOM(vdom) {
  * @param {*} vdom 
  */
 function mountClassComponent(vdom) {
-    const { type: ClassCom, props } = vdom;
+    const { type: ClassCom, props, ref } = vdom;
     const classInstance = new ClassCom(props);
+    if (ref) ref.current = classInstance;
     let renderVdom = classInstance.render();
     //把类组件渲染的虚拟dom保存在类的实例上
     classInstance.oldRenderVdom = renderVdom;
