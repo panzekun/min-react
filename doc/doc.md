@@ -18,6 +18,8 @@
 
 - `ReactDOM`来确保浏览器中的真实DOM数据和React元素保持一致
 
+- React17之前是用babel-loader将JSX进行转译，React17之后是在package中引入新的入口函数并调用
+
   
 
 ![](jsx.png)
@@ -70,7 +72,7 @@
 
 
 
-### 2.4、合成事件和批量更新
+## 三、合成事件和批量更新
 
 - State 的更新会被合并 当你调用 setState() 的时候，React 会把你提供的对象合并到当前的 state
 - State 的更新可能是异步的
@@ -82,8 +84,153 @@
   - 使用 JSX 语法时你需要传入一个函数作为事件处理函数，而不是一个字符串
   - 你不能通过返回 `false` 的方式阻止默认行为。你必须显式的使用`preventDefault`
 
-### 2.5、ref
+## 四、ref
 
 - Refs 提供了一种方式，允许我们访问 DOM 节点或在 render 方法中创建的 React 元素
 
 **2.5.1、为DOM元素添加ref**
+
+- 可以使用 ref 去存储 DOM 节点的引用
+- 当 ref 属性用于 HTML 元素时，构造函数中使用 React.createRef() 创建的 ref 接收底层 DOM 元素作为其 current 属性
+
+```jsx
+import React from 'react';
+import ReactDOM from "react-dom";
+// import React from './lib/react';
+// import ReactDOM from './lib/react-dom';
+
+class Sum extends React.Component {
+    constructor(props) {
+        super(props);
+        this.a = React.createRef();
+        this.b = React.createRef();
+        this.result = React.createRef();
+    }
+    handleAdd = () => {
+        let a = this.a.current.value;
+        let b = this.b.current.value;
+        this.result.current.value = a + b;
+    }
+    render() {
+        return (
+            <div>
+                <input ref={this.a} />+
+            	<input ref={this.b} />
+            	<button onClick={this.handleAdd}>=</button>
+                <input ref={this.result} />
+            <div/>
+        );
+    }
+}
+const element = <Sum />
+console.log(element)
+
+ReactDOM.render(element, document.getElementById("root"))
+```
+
+
+
+**2.5.2、为DOM元素添加ref**
+
+- 当 ref 属性用于自定义 class 组件时，ref 对象接收组件的挂载实例作为其 current 属性
+
+```jsx
+import React from 'react';
+import ReactDOM from "react-dom";
+// import React from './lib/react';
+// import ReactDOM from './lib/react-dom';
+
+class Form extends React.Component {
+    input
+    constructor(props) {
+        super(props);
+        this.input = React.createRef();
+    }
+    getFocus = () => {
+        this.input.current.getFocus();
+    }
+    render() {
+        return (
+            <>
+                <TextInput ref={this.input} />
+                <button onClick={this.getFocus}>获得焦点</button>
+            </>
+        );
+    }
+}
+class TextInput extends React.Component {
+    input
+    constructor(props) {
+        super(props);
+        this.input = React.createRef();
+    }
+    getFocus = () => {
+        this.input.current.focus();
+    }
+    render() {
+        return <input ref={this.input} />
+    }
+}
+const element = <Form />
+console.log(element)
+
+ReactDOM.render(element, document.getElementById("root"))
+
+```
+
+
+
+**Ref转发 forwardRef**
+
+- 你不能在函数组件上使用 ref 属性，因为他们没有实例
+- Ref 转发是一项将 ref 自动地通过组件传递到其一子组件的技巧
+- Ref 转发允许某些组件接收 ref，并将其向下传递给子组件
+
+```jsx
+import React from 'react';
+import ReactDOM from "react-dom";
+// import React from './lib/react';
+// import ReactDOM from './lib/react-dom';
+
+const TextInput = React.forwardRef((props, ref) => (
+    <input ref={ref} />
+));
+class Form extends React.Component {
+    input
+    constructor(props) {
+        super(props);
+        this.input = React.createRef();
+    }
+    getFocus = () => {
+        console.log(this.input.current);
+
+        this.input.current.focus();
+    }
+    render() {
+        return (
+            <>
+                <TextInput ref={this.input} />
+                <button onClick={this.getFocus}>获得焦点</button>
+            </>
+        );
+    }
+}
+const element = <Form />
+console.log(element)
+
+ReactDOM.render(element, document.getElementById("root"))
+```
+
+
+
+## 五、react基本生命周期（旧）
+
+**基本的生命周期**
+
+- initializtion 初始化状态
+- mounting 页面挂载
+  组件的 `componentWillMount render componentDidMount`
+- updation 数据更新
+- unmounting 组件卸载
+
+![](lifecycle-old.png)

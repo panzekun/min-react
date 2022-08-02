@@ -58,9 +58,16 @@ class Updater {
     }
 }
 function shouldUpdate(classInstance, nextProps, nextState) {
+    let willUpdate = true; // 是否要更新,默认更新
+    if (classInstance.shouldComponentUpdate && !classInstance.shouldComponentUpdate(nextProps, nextState)) {
+        willUpdate = false;
+    }
+    if (willUpdate && classInstance.componentWillUpdate) {
+        classInstance.componentWillUpdate();
+    }
     if (nextProps) classInstance.props = nextProps;
     classInstance.state = nextState;
-    classInstance.forceUpdate();
+    if (willUpdate) classInstance.forceUpdate();
 }
 export class Component {
     //标识是class组件
@@ -84,5 +91,8 @@ export class Component {
         const newRenderVdom = this.render();
         compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom);
         this.oldRenderVdom = newRenderVdom;
+        if (this.componentDidUpdate) {
+            this.componentDidUpdate(this.props, this.state);
+        }
     }
 }
